@@ -1,183 +1,141 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
 using System.Linq;
 using System.Text;
-using System.ComponentModel;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using System.IO;
-using System.Net;
-using System.Data.SqlClient;
 
-namespace Project
+namespace RailFence
 {
-  class Program
-  {
-        public static class GlobalMembers
+    class Program
+    {
+
+        private static char[][] BuildMatrix(int rows, int cols)
         {
+            char[][] result = new char[rows][];
 
-            // function to encrypt a message
-            public static string encryptRailFence(string text, int key)
+            for (int row = 0; row < result.Length; row++)
             {
-                // create the matrix to cipher plain text
-                // key = rows , length(text) = columns
-                char[][] rail = RectangularArrays.RectangularCharArray(key, (text.Length));
-
-                // filling the rail matrix to distinguish filled
-                // spaces from blank ones
-                for (int i = 0; i < key; i++)
-                {
-                    for (int j = 0; j < text.Length; j++)
-                    {
-                        rail[i][j] = '\n';
-                    }
-                }
-
-                // to find the direction
-                bool dir_down = false;
-                int row = 0;
-                int col = 0;
-
-                for (int i = 0; i < text.Length; i++)
-                {
-                    // check the direction of flow
-                    // reverse the direction if we've just
-                    // filled the top or bottom rail
-                    if (row == 0 || row == key - 1)
-                    {
-                        dir_down = !dir_down;
-                    }
-
-                    // fill the corresponding alphabet
-                    rail[row][col++] = text[i];
-
-                    // find the next row using direction flag
-                    dir_down ? row++: row--;
-                }
-
-                //now we can construct the cipher using the rail matrix
-                string result;
-                for (int i = 0; i < key; i++)
-                {
-                    for (int j = 0; j < text.Length; j++)
-                    {
-                        if (rail[i][j] != '\n')
-                        {
-                            result.push_back(rail[i][j]);
-                        }
-                    }
-                }
-
-                return result;
+                result[row] = new char[cols];
             }
 
-            // This function receives cipher-text and key
-            // and returns the original text after decryption
-            public static string decryptRailFence(string cipher, int key)
+            return result;
+
+        }
+        
+        private static string MatrixtoString(char[][] matrix)
+        {
+            string result = string.Empty;
+
+            for (int row = 0; row < matrix.Length; row++)
             {
-                // create the matrix to cipher plain text
-                // key = rows , length(text) = columns
-                char[][] rail = RectangularArrays.RectangularCharArray(key, cipher.Length);
-
-                // filling the rail matrix to distinguish filled
-                // spaces from blank ones
-                for (int i = 0; i < key; i++)
+                for (int col = 0; col < matrix[row].Length; col++)
                 {
-                    for (int j = 0; j < cipher.Length; j++)
+                    if (matrix[row][col] != '\0')
                     {
-                        rail[i][j] = '\n';
+                        result += matrix[row][col];
                     }
                 }
-
-                // to find the direction
-                bool dir_down;
-
-                int row = 0;
-                int col = 0;
-
-                // mark the places with '*'
-                for (int i = 0; i < cipher.Length; i++)
-                {
-                    // check the direction of flow
-                    if (row == 0)
-                    {
-                        dir_down = true;
-                    }
-                    if (row == key - 1)
-                    {
-                        dir_down = false;
-                    }
-
-                    // place the marker
-                    rail[row][col++] = '*';
-
-                    // find the next row using direction flag
-                    dir_down ? row++: row--;
-                }
-
-                // now we can construct the fill the rail matrix
-                int index = 0;
-                for (int i = 0; i < key; i++)
-                {
-                    for (int j = 0; j < cipher.Length; j++)
-                    {
-                        if (rail[i][j] == '*' && index < cipher.Length)
-                        {
-                            rail[i][j] = cipher[index++];
-                        }
-                    }
-                }
-
-
-                string result;
-
-                row = 0, col = 0;
-                for (int i = 0; i < cipher.Length; i++)
-                {
-                    if (row == 0)
-                    {
-                        dir_down = true;
-                    }
-                    if (row == key - 1)
-                    {
-                        dir_down = false;
-                    }
-
-                    if (rail[row][col] != '*')
-                    {
-                        result.push_back(rail[row][col++]);
-                    }
-
-
-                    dir_down ? row++: row--;
-                }
-                return result;
             }
 
+            return result;
+        }
 
-            internal static void Main()
+        private static char[][] Transpose(char[][] matrix)
+        {
+            char[][] result = BuildMatrix(matrix[0].Length, matrix.Length);
+
+            for (int row = 0; row < matrix.Length; row++)
             {
-                string text;
-                int key;
-                string ciphertext;
-                ciphertext = encryptRailFence(text, key);
+                for (int col = 0; col < matrix[row].Length; col++)
+                {
+                    result[col][row] = matrix[row][col];
+                }
+            }
 
-                Console.Write("Jepni fjalen qe doni te enkriptoni: ");
-                text = ConsoleInput.ReadToWhiteSpace(true);
-                Console.Write("Jepni qelsin: ");
-                key = int.Parse(ConsoleInput.ReadToWhiteSpace(true));
-                Console.Write(encryptRailFence(text, key));
-                Console.Write("\n");
+            return result;
+        }
 
+        private static string Enrypt(string text, int key)
+        {
+            string result = string.Empty;
 
-                Console.Write("Dekriptimi: ");
-                Console.Write("\n");
-                Console.Write(decryptRailFence(ciphertext, key));
-                Console.Write("\n");
+            char[][] matrix = BuildMatrix(key, text.Length);
 
+            int rowIncrement = 1;
+            for (int row = 0, col = 0; col < matrix[row].Length; col++)
+            {
+                if (row + rowIncrement == matrix.Length || row + rowIncrement == -1)
+                {
+                    rowIncrement *= -1;
+                }
+
+                matrix[row][col] = text[col];
+                row += rowIncrement;
+            }
+
+            result = MatrixtoString(matrix);
+
+            return result;
+        }
+
+        private static string Decrypt(string ciphertext, int key)
+        {
+            string result = string.Empty;
+
+            char[][] matrix = BuildMatrix(key, ciphertext.Length);
+
+            int rowIncrement = 1;
+            int textIdx = 0;
+
+            for (int selectedRow = 0; selectedRow < matrix.Length; selectedRow++)
+            {
+                for (int row = 0, col = 0; col < matrix[row].Length; col++)
+                {
+                    if (row + rowIncrement == matrix.Length || row + rowIncrement == -1)
+                    {
+                        rowIncrement *= -1;
+                    }
+
+                    if (row == selectedRow)
+                    {
+                        matrix[row][col] = ciphertext[textIdx++];
+                    }
+
+                    row += rowIncrement;
+                }
 
             }
+
+            matrix = Transpose(matrix);
+            result = MatrixtoString(matrix);
+
+            return result;
+
+        }
+
+        public static void Main()
+        {
+            string text;
+
+            Console.Write("Jepni fjalen qe doni te enkriptoni: ");
+            text = Console.ReadLine();
+
+            Console.Write("Jepni qelsin: ");
+            int key = Convert.ToInt32(Console.ReadLine());
+
+            Console.Write("Enkriptimi: ");
+            Console.WriteLine(Enrypt(text, key));
+
+
+            string ciphertext = Enrypt(text, key);
+            
+            Console.Write("Dekriptimi: ");
+            Console.WriteLine(Decrypt(ciphertext, key));
+            Console.Write("\n");
+
+            Main();
         }
     }
-}    
+}
