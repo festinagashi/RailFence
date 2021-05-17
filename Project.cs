@@ -57,7 +57,7 @@ namespace RailFence
             return result;
         }
 
-        private static string Enrypt(string text, int key)
+        private static string Encrypt(string text, int key)
         {
             string result = string.Empty;
 
@@ -126,10 +126,10 @@ namespace RailFence
             int key = Convert.ToInt32(Console.ReadLine());
 
             Console.Write("Enkriptimi: ");
-            Console.WriteLine(Enrypt(text, key));
+            Console.WriteLine(Encrypt(text, key));
 
 
-            string ciphertext = Enrypt(text, key);
+            string ciphertext = Encrypt(text, key);
             
             Console.Write("Dekriptimi: ");
             Console.WriteLine(Decrypt(ciphertext, key));
